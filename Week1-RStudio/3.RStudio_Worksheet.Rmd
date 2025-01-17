@@ -1,6 +1,6 @@
 ---
 title: '3\. Worksheet: Basic R'
-author: "Student Name; Z620: Quantitative Biodiversity, Indiana University"
+author: "El Park; Z620: Quantitative Biodiversity, Indiana University"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
 geometry: margin=2.54cm
@@ -47,11 +47,12 @@ In the R code chunk below, please provide the code to:
 1) clear your R environment,
 2) print your current working directory, and
 3) set your working directory to your '3.RStudio' folder. 
-
+3.RStudio
 ```{r}
-
-
-
+rm(list=ls())
+getwd()
+#setwd("/cloud/project/QB2025_Park/Week1-RStudio")
+setwd(getwd())
 ```
 
 ## 3) USING R AS A CALCULATOR
