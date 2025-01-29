@@ -406,7 +406,7 @@ summary(anova2)
 summary(anova3)
 
 ```
-This would repeat for the others, but I chose two to show the comparisons for now. This data shows that CAL contribution decreases as nutrients increase, but it is generally low to begin with, so there is no statistical significance for the effect of nutrients on CAL populations. Similarly, there is somewhat of a trend showing CHYD populations increasing as biomass increases like we see in the linear regression results, but there is also no statistical significance to confirm this trend.
+>This would repeat for the others, but I chose two to show the comparisons for now. This data shows that CAL contribution decreases as nutrients increase, but it is generally low to begin with, so there is no statistical significance for the effect of nutrients on CAL populations. Similarly, there is somewhat of a trend showing CHYD populations increasing as biomass increases like we see in the linear regression results, but there is also no statistical significance to confirm this trend.
 
 ## SUBMITTING YOUR WORKSHEET
 Use Knitr to create a PDF of your completed **3.RStudio_Worksheet.Rmd** document, push the repo to GitHub, and create a pull request.
