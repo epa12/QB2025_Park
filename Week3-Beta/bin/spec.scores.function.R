@@ -1,4 +1,4 @@
-`add.spec.scores.class` <-
+add.spec.scores.class <-
   function(ordi,comm,method="cor.scores",multi=1,Rscale=F,scaling="1") {
     ordiscores <- scores(ordi,display="sites")
     n <- ncol(comm)

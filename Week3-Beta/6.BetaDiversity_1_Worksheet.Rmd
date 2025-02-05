@@ -76,10 +76,10 @@ In the R code chunk below, do the following:
 data(doubs)
 str(doubs, max.level=1)
 
-print(doubs$fish)
+head(doubs$fish)
 head(doubs$env)
 head(doubs$xy)
-print(doubs$species)
+head(doubs$species)
 ```
 
 ***Question 1***: Describe some of the attributes of the `doubs` dataset.
@@ -100,8 +100,7 @@ c.  What do these patterns say about the limitations of using richness when exam
 
 > ***Answer 2a***: Fish richness is much higher in the bend and downstream of the Doubs River.
 > ***Answer 2b***: Brown trout abundance is higher upstream.
-> ***Answer 2c***: Even though richness is generally higher downstream, brown trout populations do not reflect the same pattern.
-> This indicates that while richness tells us how diverse specific sites are, it lacks important details about abundance or distribution of species.
+> ***Answer 2c***: Even though richness is generally higher downstream, brown trout populations do not reflect the same pattern. This indicates that while richness tells us how diverse specific sites are, it lacks important details about abundance or distribution of species.
 
 ## 3) QUANTIFYING BETA-DIVERSITY
 
@@ -240,7 +239,7 @@ gplots::heatmap.2(as.matrix(fish),
 
 ***Question 6***: Based on cluster analyses and the introductory plots that we generated after loading the data, develop an ecological hypothesis for fish diversity the `doubs` data set?
 
-> ***Answer 6***: 
+> ***Answer 6***: There is more dissimilarity between diversity in sites upstream and downstream, which indicates environmental conditions change as we move throughout the river.
 
 ### C. Ordination
 
@@ -284,7 +283,7 @@ In the R code chunk below, do the following:
 2.  use a permutation test (999 permutations) to test the correlations of each species along each axis.
 
 ```{r, include=FALSE}
-`add.spec.scores.class` <-
+add.spec.scores.class <-
   function(ordi,comm,method="cor.scores",multi=1,Rscale=F,scaling="1") {
     ordiscores <- scores(ordi,display="sites")
     n <- ncol(comm)
@@ -341,24 +340,37 @@ In the R code chunk below, do the following:
     ordi$cproj <- specscores
     return(ordi)
   }
-
 ```
 
 ```{r}
-
 require("vegan")
 fishREL<-fish 
   for(i in 1:nrow(fish)){
   fishREL[i,]=fish[i,]/sum(fish[i,])
-}
-fish.pcoa1 <- add.spec.scores.class(fish.pcoa,fishREL, method = "pcoa.scores")
-#text(fish.pcoa1$cproj[,1], fish.pcoa1$cproj[,2],
-#     labels = row.names(fish.pcoa1$cproj), col = "black")  
+  }
 
-spe.corr <- add.spec.scores(fish.pcoa, fishREL, method = "cor.scores")$cproj
+plot(fish.pcoa$points[,1], fish.pcoa$points[,2], ylim=c(-0.2, 0.7),
+     xlab=paste("PCoA 1(",explainvar1,"%)",sep=""),
+     ylab=paste("PCoA 2(",explainvar2,"%)",sep=""),
+     pch=16, cex=2.0, type="n", cex.lab=1.5, 
+     cex.axis=1.2, axes=FALSE)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+abline(h=0, v=0, lty=3)
+box(lwd=2)
+points(fish.pcoa$points[,1], fish.pcoa$points[,2],
+       pch=19, cex=3, bg="gray", col="gray")
+fish.pcoa1 <- add.spec.scores.class(fish.pcoa,fishREL, method = "pcoa.scores")
+ text(fish.pcoa$points[,1], fish.pcoa$points[,2], 
+     labels=row.names(fish.pcoa$points))
+ text(fish.pcoa1$cproj[,1], fish.pcoa1$cproj[,2],
+      labels = row.names(fish.pcoa1$cproj), col = "black")
+
+
+spe.corr <- add.spec.scores(fish.pcoa1, fishREL, method = "cor.scores")$cproj
 corrcut  <- 0.7
 imp.spp  <- spe.corr[abs(spe.corr[, 1]) >= corrcut | abs(spe.corr[, 2]) >= corrcut, ]
-fit <- envfit(fish.pcoa, fishREL, perm = 999)
+fit <- envfit(fish.pcoa1, fishREL, perm = 999)
 
 ```
 
@@ -367,8 +379,8 @@ fit <- envfit(fish.pcoa, fishREL, perm = 999)
 a.  Describe the grouping of sites in the Doubs River based on fish community composition.
 b.  Generate a hypothesis about which fish species are potential indicators of river quality.
 
-> ***Answer 7a***: 
-> ***Answer 7b***:
+> ***Answer 7a***: The Doubs river seems to have a large grouping of species near sites located close to the bend of the river. There is also a grouping of sites that are upstream and another grouping of sites that are downstream.
+> ***Answer 7b***: Brown trout and Bleaks seem to be important indicators of river quality, as brown trout populations are relatively abundant in upstream sites with high O2 and relatively low amm/nit/bdo/phos and bleaks seem to be abundant in areas with high pho/nit/amm/bdo and low O2. 
 
 ## SYNTHESIS
 
@@ -381,7 +393,6 @@ MZB<-read.csv("SbS_full.csv")
 mzb<-MZB[,-1]
 
 mzb.db<-vegdist(mzb, method="bray")
-print(mzb.db)
 
 mzbw<-hclust(mzb.db, method="ward.D2")
 par(mar=c(1, 5, 2, 2)+0.1)
