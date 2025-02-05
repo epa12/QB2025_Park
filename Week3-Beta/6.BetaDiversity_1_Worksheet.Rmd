@@ -1,6 +1,6 @@
 ---
 title: '6\. Worksheet: Among Site (Beta) Diversity -- Part 1'
-author: "Student Name; Z620: Quantitative Biodiversity, Indiana University"
+author: "El Park; Z620: Quantitative Biodiversity, Indiana University"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
 geometry: margin=2.54cm
@@ -49,10 +49,19 @@ In the R code chunk below, please provide the code to:
 4) Load the `vegan` R package (be sure to install first if you have not already).
 
 ```{r}
+rm(list = ls())
+getwd()
+setwd("/cloud/project/QB2025_Park/Week3-Beta")
 
+package.list <- c('vegan', 'ade4', 'viridis', 'gplots', 'BiodiversityR', 'indicspecies')
+for (package in package.list) {
+  if (!require(package, character.only = TRUE, quietly = TRUE)) {
+    install.packages(package)
+    library(package, character.only = TRUE)
+  }
+}
 
-
-
+#install.packages("Rcmdr", dependencies = TRUE)
 ```
 
 ## 2) LOADING DATA
@@ -64,9 +73,9 @@ In the R code chunk below, do the following:
 
 ```{r}
 # note, please do not print the dataset when submitting
-
-
-
+data(doubs)
+str(doubs, max.level=1)
+head(doubs$env)
 ```
 
 ***Question 1***:  Describe some of the attributes of the `doubs` dataset.  
@@ -87,6 +96,44 @@ a.  How does fish richness vary along the sampled reach of the Doubs River?
 b.  How does Brown Trout (*Salmo trutta*) abundance vary along the sampled reach of the Doubs River?
 c.  What do these patterns say about the limitations of using richness when examining patterns of biodiversity?
 
+```{r}
+# Define Plot Parameters
+opar <- par(no.readonly = TRUE) 
+par(mfrow = c(1,2), mar = c(4, 4, 3, 4) + 0.1, xpd = TRUE)
+
+# Stream Fish
+spa.S <- specnumber(doubs$fish)               
+spa.S.color <- rev(terrain.colors(31))    # Define Richness Color Pallette
+spa.N.color <- rev(terrain.colors(7))     # Define Abundance Color Pallette
+
+# Stream Fish Richness
+plot(doubs$xy, asp = 1, type = 'l', col = "light blue", lwd = 10, las = 1, 
+     cex.axis = 0.75, xlim = c(0,280), ylim = c(0,280), 
+     main = "Fish Richness (S)", 
+     xlab = "X-Coordinate (km)", ylab = "Y-Coordinate (km)")
+points(doubs$xy, pch = 22, cex=2, bg = spa.S.color[spa.S + 1])
+text(doubs$xy, as.character(spa.S), cex = 0.5, col = "red")
+text(150, 0, "Upstream", cex = 1, col = "red")
+text(48, 114, "Downstream", cex = 1, col = "red")
+legend("topright", inset=c(-0.25, 0), pch = 22, pt.cex = 2, bty = 'n',
+       title = "S", legend = seq(0, 30, 10), 
+       pt.bg = spa.S.color[seq(1, 31, 10)])    
+
+# Brown Trout Abundance
+plot(doubs$xy, asp = 1, type = 'l', col = "light blue", lwd = 10, 
+     las = 1, cex.axis = 0.75,  xlim = c(0, 280), ylim = c(0, 280), 
+     main = "Brown Trout Abundance (N)", 
+     xlab = "X-Coordinate (km)", ylab = "Y-Coordinate (km)")
+points(doubs$xy, pch = 22, cex = 2, bg = spa.N.color[doubs$fish$Satr + 1])
+text(doubs$xy, as.character(doubs$fish$Satr), cex = 0.5, col="red")
+text(150, 0, "Upstream", cex = 1, col = "red")
+text(48, 114, "Downstream", cex = 1, col = "red")
+legend("topright", inset=c(-0.25, 0), pch = 22, pt.cex = 2, bty = 'n',
+       title = "N", legend = seq(0, 6, 2), pt.bg = spa.N.color[seq(1, 7, 2)])
+par <- opar
+```
+
+
 > ***Answer 2a***:  
 > ***Answer 2b***:  
 > ***Answer 2c***:  
@@ -99,15 +146,65 @@ In the R code chunk below, do the following:
 2. use this function to analyze various aspects of $\beta$-diversity in the Doubs River.  
 
 ```{r}
+beta.w <- function(site.by.species = ""){
+  SbyS.pa <- decostand(site.by.species, method = "pa") 
+  # convert to presence-absence
+  S <- ncol(SbyS.pa[,which(colSums(SbyS.pa) > 0)])     
+  # number of species in the region
+  a.bar <- mean(specnumber(SbyS.pa))                   
+  # average richness at each site
+  b.w <- round(S/a.bar, 3)                            
+  # round to 3 decimal places
+  return(b.w)
+}
 
+beta.w <- function(site.by.species = "", sitenum1 = "", sitenum2 = "", 
+    pairwise = FALSE){
 
+  # ONLY if we specify pairwise as TRUE, do this:
+    if (pairwise == TRUE){
+      
+      # As a check, let's print an error if we do not provide needed arguments
+      if (sitenum1 == "" | sitenum2 == "") {
+        print("Error: please specify sites to compare")
+        return(NA)}
+      
+      # If our function made it this far, let us calculate pairwise beta diversity
+      site1 = site.by.species[sitenum1,]                    
+      # Select site 1
+      site2 = site.by.species[sitenum2,]                    
+      # Select site 2
+      site1 = subset(site1, select = site1 > 0)            
+      # Removes absences
+      site2 = subset(site2, select = site2 > 0)             
+      # Removes absences
+      gamma = union(colnames(site1), colnames(site2))       
+      # Gamma species pool
+      s     = length(gamma)                                
+      # Gamma richness
+      a.bar = mean(c(specnumber(site1), specnumber(site2))) 
+      # Mean sample richness
+      b.w   = round(s/a.bar - 1, 3)
+      return(b.w)
+    }
+  
+  # OTHERWISE pairwise defaults to FALSE, so do this, like before:
+  else{                                                   
+      SbyS.pa <- decostand(site.by.species, method = "pa") 
+      # convert to presence-absence
+      S <- ncol(SbyS.pa[,which(colSums(SbyS.pa) > 0)])     
+      # number of species in region
+      a.bar <- mean(specnumber(SbyS.pa))                   
+      # average richness at each site
+      b.w <- round(S/a.bar, 3)
+      return(b.w)
+  }
+}
 
-
-
-
-
-
-
+beta.w(doubs$fish)
+beta.w(doubs$env)
+beta.w(doubs$xy)
+beta.w(doubs$species)
 
 ```
 
@@ -136,13 +233,14 @@ In the R code chunk below, do the following:
 4. construct a resemblance matrix based on Bray-Curtis Distance ("fish.db").  
 
 ```{r}
+fish <- doubs$fish 
+fish <- fish[-8, ] # Remove site 8 from data
 
+#Sørensen
+fish.ds <- vegdist(fish, method = "bray", binary = TRUE)
 
-
-
-
-
-
+#Bray-Curtis 
+fish.db <- vegdist(fish, method = "bray", upper = TRUE, diag = TRUE)
 
 ```
 
@@ -165,15 +263,13 @@ In the R code chunk below, do the following:
 3. use the `levelplot()` function to create a heatmap of fish abundances in the Doubs River.
 
 ```{r}
+# Define Order of Sites
+order <- rev(attr(fish.db, "Labels"))  
 
-
-
-
-
-
-
-
-
+# Plot Heatmap
+levelplot(as.matrix(fish.db)[, order], aspect = "iso", col.regions = magma, 
+          xlab = "Doubs Site", ylab = "Doubs Site", scales = list(cex = 0.5), 
+          main = "Bray-Curtis Distance")
 
 ```
 
@@ -185,14 +281,18 @@ In the R code chunk below, do the following:
 2. plot your cluster analysis (use either `hclust` or `heatmap.2`). 
 
 ```{r} 
+# Perform Cluster Analysis
+fish.ward <- hclust(fish.db, method = "ward.D2")
 
+# Plot Cluster
+par(mar = c(1, 5, 2, 2) + 0.1)
+plot(fish.ward, main = "Doubs River Fish: Ward's Clustering", 
+     ylab = "Squared Bray-Curtis Distance")
 
-
-
-
-
-
-
+gplots::heatmap.2(as.matrix(fish), 
+          distfun = function(x) vegdist(x, method = "bray"),
+          hclustfun = function(x) hclust(x, method = "ward.D2"), 
+          col = viridis, trace = "none", density.info = "none")
 
 ```
 
@@ -213,13 +313,32 @@ In the R code chunk below, do the following:
 5. identify influential species and add species coordinates to PCoA plot.
 
 ```{r}
+fish.pcoa <- cmdscale(fish.db, eig = TRUE, k = 3) 
+explainvar1 <- round(fish.pcoa$eig[1] / sum(fish.pcoa$eig), 3) * 100
+explainvar2 <- round(fish.pcoa$eig[2] / sum(fish.pcoa$eig), 3) * 100
+explainvar3 <- round(fish.pcoa$eig[3] / sum(fish.pcoa$eig), 3) * 100
+sum.eig <- sum(explainvar1, explainvar2, explainvar3)
+# Define Plot Parameters
+par(mar = c(5, 5, 1, 2) + 0.1)
 
+# Initiate Plot
+plot(fish.pcoa$points[ ,1], fish.pcoa$points[ ,2], ylim = c(-0.2, 0.7),
+     xlab = paste("PCoA 1 (", explainvar1, "%)", sep = ""),
+     ylab = paste("PCoA 2 (", explainvar2, "%)", sep = ""),
+     pch = 16, cex = 2.0, type = "n", cex.lab = 1.5, 
+     cex.axis = 1.2, axes = FALSE)
 
+# Add Axes
+axis(side = 1, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+axis(side = 2, labels = T, lwd.ticks = 2, cex.axis = 1.2, las = 1)
+abline(h = 0, v = 0, lty = 3)
+box(lwd = 2)
 
-
-
-
-
+# Add Points & Labels
+points(fish.pcoa$points[ ,1], fish.pcoa$points[ ,2],
+       pch = 19, cex = 3, bg = "gray", col = "gray")
+text(fish.pcoa$points[ ,1], fish.pcoa$points[ ,2], 
+     labels = row.names(fish.pcoa$points))
 
 
 ```
@@ -231,10 +350,17 @@ In the R code chunk below, do the following:
 
 ```{r}
 
+# Now, we use this information to calculate and add species scores
+fish.pcoa <- add.spec.scores(fish.pcoa,fishREL,method = "pcoa.scores")
+text(fish.pcoa$cproj[ ,1], fish.pcoa$cproj[ ,2], 
+     labels = row.names(fish.pcoa$cproj), col = "black")
 
+spe.corr <- add.spec.scores(fish.pcoa, fishREL, method = "cor.scores")$cproj
+corrcut  <- 0.7       # user defined cutoff
+imp.spp  <- spe.corr[abs(spe.corr[, 1]) >= corrcut | abs(spe.corr[, 2]) >= corrcut, ]
 
-
-
+# Permutation Test for Species Abundances Across Axes
+fit <- envfit(fish.pcoa, fishREL, perm = 999)
 
 ```
 
@@ -252,3 +378,9 @@ b.  Generate a hypothesis about which fish species are potential indicators of r
 Load the dataset from that you and your partner are using for the team project. 
 Use one of the tools introduced in the beta diversity module to visualize your data. 
 Describe any interesting patterns and identify a hypothesis is relevant to the principles of biodiversity. 
+
+```{r}
+
+
+
+```
