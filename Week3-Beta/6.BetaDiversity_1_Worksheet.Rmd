@@ -60,7 +60,7 @@ for (package in package.list) {
   }
 }
 
-#install.packages("Rcmdr", dependencies = TRUE)
+install.packages("Rcmdr", dependencies = TRUE)
 ```
 
 ## 2) LOADING DATA

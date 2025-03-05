@@ -1,6 +1,6 @@
 ---
 title: '7\. Worksheet: Diversity Synthesis'
-author: "Student Name; Z620: Quantitative Biodiversity, Indiana University"
+author: "El Park; Z620: Quantitative Biodiversity, Indiana University"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
 geometry: margin=2.54cm
@@ -65,7 +65,10 @@ In the R code chunk below, please provide the code to:
 4) Load the `vegan` R package (be sure to install first if you have not already).
 
 ```{r}
-
+rm(list = ls())
+getwd()
+setwd("/cloud/project/QB2025_Park/Week5-Confection")
+require('vegan', 'ade4', 'viridis', 'gplots')
 
 ```
 
@@ -118,6 +121,7 @@ Make some observations about the preference-profiles of the class.
 
 
 ```{r}
+
 
 
 ```
