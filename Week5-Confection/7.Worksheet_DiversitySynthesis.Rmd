@@ -5,7 +5,7 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
 geometry: margin=2.54cm
 ---
-  
+
 ## OVERVIEW
 
 In this worksheet, you will conduct exercises that reinforce fundamental concepts of biodiversity.
@@ -68,7 +68,15 @@ In the R code chunk below, please provide the code to:
 rm(list = ls())
 getwd()
 setwd("/cloud/project/QB2025_Park/Week5-Confection")
-require('vegan', 'ade4', 'viridis', 'gplots')
+package.list <- c('vegan', 'ade4', 'viridis', 'gplots', 'BiodiversityR', 'indicspecies')
+for (package in package.list) {
+  if (!require(package, character.only = TRUE, quietly = TRUE)) {
+    install.packages(package)
+    library(package, character.only = TRUE)
+  }
+}
+
+install.packages("Rcmdr", dependencies = TRUE)
 
 ```
 
@@ -78,12 +86,22 @@ require('vegan', 'ade4', 'viridis', 'gplots')
 Based on these results, discuss how individual vs. collective sampling efforts capture the diversity of the source community.
 
 ```{r}
-
+s.obs <- function(x=""){
+rowSums(x>0) * 1
+}
+scjelly<-read.csv("data/jelly.source.comm.csv", sep =",", header = TRUE, row.names=1)
+scjelly.t<-as.data.frame(t(scjelly))
+min<-min(rowSums(scjelly.t))    
+s.rarefy<-rarefy(x=scjelly.t, sample=min, se=TRUE) 
+plot.new()
+rarecurve(x=scjelly.t, step=20, col="blue",cex=0.6, las=1, xlim = c(0, 200))
+abline(0, 1, col='red')             
+text(1500, 1500, "1:1", pos=2, col='red')
 
 ```
 
 > ***Answer 1***:
->
+> All the points on the curve are below the ab line, meaning individual efforts are not capturing the true diversity of the community, meaning collective sampling efforts are needed.
 
 
 **Question 2:** Starting with the site-by-species matrix, visualize beta diversity.
@@ -93,23 +111,83 @@ Which "species" are contributing the patterns in the ordinations?
 How does the choice of resemblance matrix affect your interpretation?
 
 ```{r}
+jelly<-read.csv('./data/2JellyBelly_SbyS.csv', sep=",", header=TRUE, row.names=1)
+#abundance
+jelly.db<-vegdist(jelly, method="bray")
+#pcoa abundance
+jellyb.pcoa<-cmdscale(jelly.db, eig=TRUE, k=3) 
+explainvar1b<-round(jellyb.pcoa$eig[1]/sum(jellyb.pcoa$eig), 3)*100
+explainvar2b<-round(jellyb.pcoa$eig[2]/sum(jellyb.pcoa$eig), 3)*100
+explainvar3b<-round(jellyb.pcoa$eig[3]/sum(jellyb.pcoa$eig), 3)*100
+sum.eigb<-sum(explainvar1b, explainvar2b, explainvar3b)
+#plot
+par(mar=c(5, 5, 1, 2)+0.1)
+plot(jellyb.pcoa$points[,1], jellyb.pcoa$points[,2], ylim=c(-0.2, 0.7),
+     xlab=paste("PCoA 1(",explainvar1b,"%)",sep=""),
+     ylab=paste("PCoA 2(",explainvar2b,"%)",sep=""),
+     pch=16, cex=2.0, type="n", cex.lab=1.5, 
+     cex.axis=1.2, axes=FALSE)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+abline(h=0, v=0, lty=3)
+box(lwd=2)
+points(jellyb.pcoa$points[,1], jellyb.pcoa$points[,2],
+       pch=19, cex=3, bg="gray", col="gray")
+text(jellyb.pcoa$points[,1], jellyb.pcoa$points[,2], 
+     labels=row.names(jellyb.pcoa$points))
 
+
+
+#incidence
+jelly.ds<-vegdist(jelly, method="bray", binary=TRUE)
+#pcoa incidence
+jellys.pcoa<-cmdscale(jelly.ds, eig=TRUE, k=3) 
+explainvar1s<-round(jellys.pcoa$eig[1]/sum(jellys.pcoa$eig), 3)*100
+explainvar2s<-round(jellys.pcoa$eig[2]/sum(jellys.pcoa$eig), 3)*100
+explainvar3s<-round(jellys.pcoa$eig[3]/sum(jellys.pcoa$eig), 3)*100
+sum.eigs<-sum(explainvar1s, explainvar2s, explainvar3s)
+#plot
+par(mar=c(5, 5, 1, 2)+0.1)
+plot(jellys.pcoa$points[,1], jellys.pcoa$points[,2], ylim=c(-0.2, 0.7),
+     xlab=paste("PCoA 1(",explainvar1b,"%)",sep=""),
+     ylab=paste("PCoA 2(",explainvar2b,"%)",sep=""),
+     pch=16, cex=2.0, type="n", cex.lab=1.5, 
+     cex.axis=1.2, axes=FALSE)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+abline(h=0, v=0, lty=3)
+box(lwd=2)
+points(jellys.pcoa$points[,1], jellys.pcoa$points[,2],
+       pch=19, cex=3, bg="gray", col="gray")
+text(jellys.pcoa$points[,1], jellys.pcoa$points[,2], 
+     labels=row.names(jellys.pcoa$points))
 
 ```
 
 > ***Answer 2***:
->
+> When considering abundance, we lessen the weight of rare jellies, and when we consider incidence, we increase the weight of rare jellies. I think it's interesting that in the abundance pcoa, my jelly data is very isolated from others, and in the incidence based pcoa, my data is similar to multiple others'. This may mean we have similar rare species but a dissimilar overal community composition.
 
 
 **Question 3** Using the preference-profile matrix, determine the most popular jelly bean in the class using a control structure (e.g., for loop, if statement, function, etc).
 
-```{r}
+**Answer 3**:
 
+```{r}
+prefs<-read.csv('/cloud/project/QB2025_Park/Week5-Confection/data/JellyBelly_PreferenceMatrix.csv', sep=",", header=TRUE, row.names=1)
+max_sum <- -Inf
+most_popular_jelly_bean <- ""
+for (i in 2:ncol(jelly)) { # Start from 2 to skip the first column (names)
+  column_sum <- sum(jelly[, i], na.rm=TRUE)
+  
+  # Step 4: Use an if statement to update the most popular jelly bean
+  if (column_sum > max_sum) {
+    max_sum <- column_sum
+    most_popular_jelly_bean <- colnames(jelly)[i]
+  }
+}
+cat("The most popular jelly bean is:", most_popular_jelly_bean, "with a total preference score of", max_sum, "!", "\n")
 
 ```
-
-> ***Answer 3***:
->
 
 
 **Question 4**
@@ -122,14 +200,42 @@ Make some observations about the preference-profiles of the class.
 
 ```{r}
 
+require('viridis')
+prefs<-na.omit(prefs)
+pref.db<-vegdist(prefs, method= "bray")
+print(pref.db)
 
+pref.w<-hclust(pref.db, method="ward.D2")
+par(mar=c(1, 5, 2, 2)+0.1)
+plot.new()
+plot(pref.w, main="JellyBuddy Search:Ward's Clustering",
+     ylab="Squared Bray-Curtis Distance")
+
+prefd.pcoa<-cmdscale(pref.db, eig=TRUE, k=3) 
+explainvar1b<-round(prefd.pcoa$eig[1]/sum(prefd.pcoa$eig), 3)*100
+explainvar2b<-round(prefd.pcoa$eig[2]/sum(prefd.pcoa$eig), 3)*100
+explainvar3b<-round(prefd.pcoa$eig[3]/sum(prefd.pcoa$eig), 3)*100
+sum.eigb<-sum(explainvar1b, explainvar2b, explainvar3b)
+#plot
+par(mar=c(5, 5, 1, 2)+0.1)
+plot(prefd.pcoa$points[,1], prefd.pcoa$points[,2], ylim=c(-0.2, 0.7),
+     xlab=paste("PCoA 1(",explainvar1b,"%)",sep=""),
+     ylab=paste("PCoA 2(",explainvar2b,"%)",sep=""),
+     pch=16, cex=2.0, type="n", cex.lab=1.5, 
+     cex.axis=1.2, axes=FALSE)
+axis(side=1, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+axis(side=2, labels=T, lwd.ticks=2, cex.axis=1.2, las=1)
+abline(h=0, v=0, lty=3)
+box(lwd=2)
+points(prefd.pcoa$points[,1], prefd.pcoa$points[,2],
+       pch=19, cex=3, bg="gray", col="gray")
+text(prefd.pcoa$points[,1], prefd.pcoa$points[,2], 
+     labels=row.names(prefd.pcoa$points))
 
 ```
 
 > ***Answer 4***:
->
-
-
+> Jaeyoung has the least dissimilarity to me, but the difference is still 0.69 out of 1, so I don't seem to have very similar tastes to anyone else. I find it interesting that though we have the least dissimilarity, I am clustered with Brian. Additionally, PCOA shows that Jocelyn is actually closer to me than Brian.
 
 
 ## SUBMITTING YOUR ASSIGNMENT
