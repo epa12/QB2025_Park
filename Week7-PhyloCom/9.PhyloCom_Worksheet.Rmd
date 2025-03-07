@@ -423,4 +423,6 @@ axis(side=4, lwd.ticks=2, cex.axis=1.2, las=1, col="red", lwd=2.2,
 Specifically, what kinds of phylogenetic data would you need? How could you use it to answer important questions in your field? 
 In your response, feel free to consider not only phylogenetic approaches related to phylogenetic community ecology, but also those we discussed last week in the PhyloTraits module, or any other concepts that we have not covered in this course.
 
-> ***Answer 7***: 
+> ***Answer 7***: Phylogenetic data could be useful in any evolutionary questions I may have (how do viruses coevolve with hosts, etc). I would need information on certain host genes and do a phylogenetic analysis on all the copies of the gene, either in nature or based on evolutionary experiments.
+
+>I think it would be super interesting to do an evolutionary experiment where we grow viruses and bacteria together in different environments to see direct effects of environmental influences on the acquisition of host genes in viruses. It would probably be more feasible to sample from the environment.
